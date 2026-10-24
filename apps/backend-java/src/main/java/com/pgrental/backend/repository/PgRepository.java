@@ -6,8 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.util.List;
 
 public interface PgRepository extends JpaRepository<Pg, String> {
+
+    List<Pg> findByOwnerId(String ownerId);
     
     @Query(value = "SELECT p.*, " +
            "ST_Distance(p.location_geom, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) / 1000.0 AS distance " +
