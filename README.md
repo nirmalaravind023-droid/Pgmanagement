@@ -69,4 +69,4 @@ docker-compose up -d
 *   **Frontend**: `npm run dev:web` (Runs port 3000)
 
 ---
-Built with ❤️ by Antigravity for StayNear PG Rentals.
+
