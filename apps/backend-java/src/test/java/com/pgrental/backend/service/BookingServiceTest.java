@@ -50,7 +50,7 @@ class BookingServiceTest {
         RoomInventory inv = testInventory(pg);
 
         when(pgRepository.findById("pg1")).thenReturn(Optional.of(pg));
-        when(roomInventoryRepository.findByPgIdAndType("pg1", RoomInventory.RoomType.SINGLE))
+        when(roomInventoryRepository.findByPgIdAndTypeForUpdate("pg1", RoomInventory.RoomType.SINGLE))
                 .thenReturn(Optional.of(inv));
         when(bookingRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -73,7 +73,7 @@ class BookingServiceTest {
     void createBooking_roomTypeMissing_throws() {
         Pg pg = testPg();
         when(pgRepository.findById("pg1")).thenReturn(Optional.of(pg));
-        when(roomInventoryRepository.findByPgIdAndType("pg1", RoomInventory.RoomType.SINGLE))
+        when(roomInventoryRepository.findByPgIdAndTypeForUpdate("pg1", RoomInventory.RoomType.SINGLE))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(testUser(), "pg1", RoomInventory.RoomType.SINGLE))
@@ -88,7 +88,7 @@ class BookingServiceTest {
         inv.setOccupied(5); // full
 
         when(pgRepository.findById("pg1")).thenReturn(Optional.of(pg));
-        when(roomInventoryRepository.findByPgIdAndType("pg1", RoomInventory.RoomType.SINGLE))
+        when(roomInventoryRepository.findByPgIdAndTypeForUpdate("pg1", RoomInventory.RoomType.SINGLE))
                 .thenReturn(Optional.of(inv));
 
         assertThatThrownBy(() -> bookingService.createBooking(testUser(), "pg1", RoomInventory.RoomType.SINGLE))
