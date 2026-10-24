@@ -21,7 +21,19 @@ public class AuthController {
     @PostMapping("/request-otp")
     public Map<String, String> requestOtp(@RequestBody Map<String, String> request) {
         String phone = request.get("phone");
-        User.Role role = User.Role.valueOf(request.get("role").toUpperCase());
+        String roleStr = request.get("role");
+        if (phone == null || phone.isBlank()) {
+            throw new IllegalArgumentException("phone is required");
+        }
+        if (roleStr == null || roleStr.isBlank()) {
+            throw new IllegalArgumentException("role is required");
+        }
+        User.Role role;
+        try {
+            role = User.Role.valueOf(roleStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + roleStr);
+        }
         String name = request.get("name");
         authService.requestOtp(phone, role, name);
         return Map.of("message", "OTP sent");
@@ -32,8 +44,22 @@ public class AuthController {
     public AuthService.AuthResponse verifyOtp(@RequestBody Map<String, String> request) {
         String phone = request.get("phone");
         String otp = request.get("otp");
-        User.Role role = User.Role.valueOf(request.get("role").toUpperCase());
-        
+        String roleStr = request.get("role");
+        if (phone == null || phone.isBlank()) {
+            throw new IllegalArgumentException("phone is required");
+        }
+        if (otp == null || otp.isBlank()) {
+            throw new IllegalArgumentException("otp is required");
+        }
+        if (roleStr == null || roleStr.isBlank()) {
+            throw new IllegalArgumentException("role is required");
+        }
+        User.Role role;
+        try {
+            role = User.Role.valueOf(roleStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + roleStr);
+        }
         return authService.verifyOtp(phone, otp, role);
     }
 }
