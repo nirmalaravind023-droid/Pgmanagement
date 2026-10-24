@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { 
+import axios from 'axios';
+import {
   CreditCard, Home, FileText,
   Bell, HelpCircle, Download
 } from 'lucide-react';
@@ -13,17 +14,26 @@ type Payment = {
 };
 
 const TenantDashboard = () => {
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const [payments, setPayments] = useState<Payment[]>([]);
   const [activeTab, setActiveTab] = useState('home');
   const [complaints, setComplaints] = useState([]);
   const [newComplaint, setNewComplaint] = useState({ description: '', category: 'MAINTENANCE' });
+  const [loading, setLoading] = useState(false);
+  const [user] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return { name: 'Tenant' };
+    }
+  });
 
   const raiseComplaint = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/complaints', { 
+      await axios.post(`${API_URL}/api/complaints`, {
         propertyId: 'demo-1', // Mock
-        ...newComplaint 
+        ...newComplaint
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -35,7 +45,7 @@ const TenantDashboard = () => {
   const fetchComplaints = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/complaints/user', {
+      const res = await axios.get(`${API_URL}/api/complaints/user`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setComplaints(res.data);
@@ -43,13 +53,28 @@ const TenantDashboard = () => {
   };
 
   const fetchData = async () => {
-    // Mocking for now as full tenant-room assignment is a multi-step process
-    setPayments([
-      { id: '1', amount: 1200, status: 'PENDING', dueDate: '2026-05-01' },
-      { id: '2', amount: 1200, status: 'PAID', dueDate: '2026-04-01', paidAt: '2026-03-28' }
-    ]);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/bookings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Map bookings to payment-like structure for display
+      setPayments(res.data.map((b: any) => ({
+        id: b.id,
+        amount: b.pg?.rent || 0,
+        status: b.status === 'CONFIRMED' ? 'PENDING' : 'PAID',
+        dueDate: b.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+      })));
+    } catch (err) {
+      console.error('Failed to fetch bookings', err);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => { fetchData(); }, []);
 
   return (
     <div className="dashboard-layout">

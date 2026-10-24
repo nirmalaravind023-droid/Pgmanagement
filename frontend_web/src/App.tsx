@@ -8,6 +8,7 @@ import TenantDashboard from './pages/TenantDashboard';
 import StudentOTPLogin from './pages/StudentOTPLogin';
 import StudentPGSearch from './pages/StudentPGSearch';
 import ProtectedRoute from './components/ProtectedRoute';
+import OwnerDashboard from './pages/OwnerDashboard';
 
 function App() {
   return (
@@ -46,6 +47,15 @@ function App() {
                   <StudentPGSearch />
                 </ProtectedRoute>
               } 
+            />
+
+            <Route
+              path="/owner/*"
+              element={
+                <ProtectedRoute role="OWNER">
+                  <OwnerDashboard />
+                </ProtectedRoute>
+              }
             />
 
             <Route path="*" element={<Navigate to="/" />} />

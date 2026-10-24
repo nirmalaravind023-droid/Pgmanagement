@@ -228,7 +228,7 @@ const StudentPGSearch = () => {
       async ({ coords }) => {
         try {
           setStatus('Finding nearby PGs...');
-          const res = await axios.get(`${API_URL}/pgs/nearby`, {
+          const res = await axios.get(`${API_URL}/api/pgs/nearby`, {
             params: { lat: coords.latitude, lng: coords.longitude }
           });
           const nearby = Array.isArray(res.data) ? res.data : res.data.pgs;
