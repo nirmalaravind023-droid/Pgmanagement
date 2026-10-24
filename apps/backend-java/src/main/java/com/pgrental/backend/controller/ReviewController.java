@@ -7,11 +7,15 @@ import com.pgrental.backend.entity.User;
 import com.pgrental.backend.repository.UserRepository;
 import com.pgrental.backend.service.ReviewService;
 import jakarta.servlet.http.HttpServletRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Tag(name = "Reviews", description = "PG reviews and ratings")
 @RestController
 @RequestMapping("/api/pgs/{pgId}/reviews")
 @RequiredArgsConstructor
@@ -31,11 +35,13 @@ public class ReviewController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Operation(summary = "Get reviews for a PG")
     @GetMapping
     public List<Review> getReviews(@PathVariable String pgId) {
         return reviewService.getReviewsForPg(pgId);
     }
 
+    @Operation(summary = "Submit a review for a PG")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Review createReview(@PathVariable String pgId,

@@ -6,6 +6,9 @@ import com.pgrental.backend.entity.User;
 import com.pgrental.backend.repository.UserRepository;
 import com.pgrental.backend.service.ImageUploadService;
 import jakarta.servlet.http.HttpServletRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -21,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Tag(name = "Images", description = "PG image upload and serving")
 @RestController
 @RequiredArgsConstructor
 @CrossOrigin
@@ -42,11 +46,13 @@ public class ImageController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Operation(summary = "Get images for a PG")
     @GetMapping("/api/pgs/{pgId}/images")
     public List<PgImage> getImages(@PathVariable String pgId) {
         return imageUploadService.getImagesForPg(pgId);
     }
 
+    @Operation(summary = "Upload image for a PG")
     @PostMapping("/api/pgs/{pgId}/images")
     @ResponseStatus(HttpStatus.CREATED)
     public PgImage uploadImage(@PathVariable String pgId,
@@ -55,12 +61,14 @@ public class ImageController {
         return imageUploadService.uploadImage(pgId, getUser(request), file);
     }
 
+    @Operation(summary = "Delete a PG image")
     @DeleteMapping("/api/images/{imageId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteImage(@PathVariable String imageId, HttpServletRequest request) throws IOException {
         imageUploadService.deleteImage(imageId, getUser(request));
     }
 
+    @Operation(summary = "Serve uploaded image file")
     @GetMapping("/api/files/{pgId}/{filename}")
     public ResponseEntity<Resource> serveFile(@PathVariable String pgId,
                                                @PathVariable String filename) throws IOException {

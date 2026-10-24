@@ -8,11 +8,15 @@ import com.pgrental.backend.repository.UserRepository;
 import com.pgrental.backend.service.OwnerService;
 import com.pgrental.backend.config.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+@Tag(name = "Owner Dashboard", description = "Owner PG management")
 @RestController
 @RequestMapping("/api/owner")
 @RequiredArgsConstructor
@@ -32,28 +36,33 @@ public class OwnerController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    @Operation(summary = "Get owner's PG listings")
     @GetMapping("/pgs")
     public List<Pg> getMyPgs(HttpServletRequest request) {
         return ownerService.getOwnerPgs(getUser(request));
     }
 
+    @Operation(summary = "Create a new PG listing")
     @PostMapping("/pgs")
     @ResponseStatus(HttpStatus.CREATED)
     public Pg createPg(@RequestBody CreatePgRequest req, HttpServletRequest request) {
         return ownerService.createPg(getUser(request), req);
     }
 
+    @Operation(summary = "Update a PG listing")
     @PutMapping("/pgs/{id}")
     public Pg updatePg(@PathVariable String id, @RequestBody CreatePgRequest req, HttpServletRequest request) {
         return ownerService.updatePg(id, getUser(request), req);
     }
 
+    @Operation(summary = "Delete a PG listing")
     @DeleteMapping("/pgs/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePg(@PathVariable String id, HttpServletRequest request) {
         ownerService.deletePg(id, getUser(request));
     }
 
+    @Operation(summary = "Get bookings for owner's PGs")
     @GetMapping("/bookings")
     public List<Booking> getMyBookings(HttpServletRequest request) {
         return ownerService.getOwnerBookings(getUser(request));
