@@ -123,4 +123,32 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.verifyOtp(phone, "1234", User.Role.STUDENT))
                 .isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    void verifyOtp_otpDeletedAfterUse_cannotReuse() {
+        String phone = "+919999999999";
+        String otp = "123456";
+        User existing = User.builder().id("u1").phone(phone).role(User.Role.STUDENT).build();
+
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
+        when(valueOps.get("otp:" + phone)).thenReturn(otp);
+        when(userRepository.findByPhone(phone)).thenReturn(Optional.of(existing));
+        when(jwtUtils.generateToken(phone)).thenReturn("jwt-token");
+
+        authService.verifyOtp(phone, otp, User.Role.STUDENT);
+        // OTP key deleted after successful use
+        verify(redisTemplate).delete("otp:" + phone);
+    }
+
+    @Test
+    void verifyOtp_expiredOtp_throws() {
+        String phone = "+919999999999";
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
+        // Redis returns null when key has expired
+        when(valueOps.get("otp:" + phone)).thenReturn(null);
+
+        assertThatThrownBy(() -> authService.verifyOtp(phone, "123456", User.Role.STUDENT))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Invalid or expired OTP");
+    }
 }

@@ -139,4 +139,23 @@ class BookingServiceTest {
 
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void createBooking_fullRoom_throws() {
+        User user = testUser();
+        Pg pg = testPg();
+        RoomInventory inv = testInventory(pg);
+        inv.setTotal(2);
+        inv.setOccupied(2); // exactly full
+
+        when(pgRepository.findById("pg1")).thenReturn(Optional.of(pg));
+        when(roomInventoryRepository.findByPgIdAndTypeForUpdate("pg1", RoomInventory.RoomType.SINGLE))
+                .thenReturn(Optional.of(inv));
+
+        assertThatThrownBy(() -> bookingService.createBooking(user, "pg1", RoomInventory.RoomType.SINGLE))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("No rooms available");
+        // occupied count must NOT have changed
+        assertThat(inv.getOccupied()).isEqualTo(2);
+    }
 }
