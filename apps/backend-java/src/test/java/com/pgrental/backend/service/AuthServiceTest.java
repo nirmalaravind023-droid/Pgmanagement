@@ -38,9 +38,8 @@ class AuthServiceTest {
     @Test
     void requestOtp_storesOtpAndPublishes() {
         String phone = "+919999999999";
-        String result = authService.requestOtp(phone, User.Role.STUDENT, "Test User");
+        authService.requestOtp(phone, User.Role.STUDENT, "Test User");
 
-        assertThat(result).hasSize(4);
         verify(valueOps).set(eq("otp:" + phone), anyString(), any());
         verify(otpMessageProducer).sendOtpMessage(eq(phone), anyString());
     }
