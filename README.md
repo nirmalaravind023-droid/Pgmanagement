@@ -49,6 +49,18 @@ Client (Web/Mobile)
       → Google Maps APIs (External Sync)
 ```
 
+## 🗂️ Repository Structure
+
+This repo contains multiple implementations. The **active application** is:
+
+| Layer | Path | Notes |
+| :--- | :--- | :--- |
+| **Backend (active)** | `apps/backend-java/` | Spring Boot 3 — this is what `docker-compose` starts |
+| **Frontend (active)** | `frontend_web/` | React + Vite, connects to the Java backend |
+| `backend/` | Node.js prototype | Earlier exploration — not production-wired |
+
+Run `apps/backend-java` + `frontend_web` together. The `backend/` directory is a separate Node.js prototype and is not connected to the Java backend or the active frontend.
+
 ## 🏁 Getting Started
 
 ### 1. Prerequisites

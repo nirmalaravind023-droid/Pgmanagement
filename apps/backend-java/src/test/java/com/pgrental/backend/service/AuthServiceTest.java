@@ -38,10 +38,34 @@ class AuthServiceTest {
     @Test
     void requestOtp_storesOtpAndPublishes() {
         String phone = "+919999999999";
+        when(redisTemplate.hasKey("otp_cooldown:" + phone)).thenReturn(false);
+
         authService.requestOtp(phone, User.Role.STUDENT, "Test User");
 
         verify(valueOps).set(eq("otp:" + phone), anyString(), any());
+        verify(valueOps).set(eq("otp_cooldown:" + phone), eq("1"), any());
         verify(otpMessageProducer).sendOtpMessage(eq(phone), anyString());
+    }
+
+    @Test
+    void requestOtp_withinCooldown_throws() {
+        String phone = "+919999999999";
+        when(redisTemplate.hasKey("otp_cooldown:" + phone)).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.requestOtp(phone, User.Role.STUDENT, "Test"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("60 seconds");
+    }
+
+    @Test
+    void verifyOtp_tooManyAttempts_throws() {
+        String phone = "+919999999999";
+        String attemptsKey = "otp_attempts:" + phone;
+        when(valueOps.increment(attemptsKey)).thenReturn(6L);
+
+        assertThatThrownBy(() -> authService.verifyOtp(phone, "000000", User.Role.STUDENT))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Too many");
     }
 
     @Test
@@ -50,6 +74,7 @@ class AuthServiceTest {
         String otp = "1234";
         User existing = User.builder().id("u1").phone(phone).role(User.Role.STUDENT).build();
 
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
         when(valueOps.get("otp:" + phone)).thenReturn(otp);
         when(userRepository.findByPhone(phone)).thenReturn(Optional.of(existing));
         when(jwtUtils.generateToken(phone)).thenReturn("jwt-token");
@@ -66,6 +91,7 @@ class AuthServiceTest {
         String phone = "+919988888888";
         String otp = "5678";
 
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
         when(valueOps.get("otp:" + phone)).thenReturn(otp);
         when(userRepository.findByPhone(phone)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -80,7 +106,8 @@ class AuthServiceTest {
     @Test
     void verifyOtp_wrongOtp_throws() {
         String phone = "+919999999999";
-        when(valueOps.get("otp:" + phone)).thenReturn("9999");
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
+        when(valueOps.get("otp:" + phone)).thenReturn("999999");
 
         assertThatThrownBy(() -> authService.verifyOtp(phone, "1111", User.Role.STUDENT))
                 .isInstanceOf(RuntimeException.class)
@@ -90,6 +117,7 @@ class AuthServiceTest {
     @Test
     void verifyOtp_nullOtp_throws() {
         String phone = "+919999999999";
+        when(valueOps.increment("otp_attempts:" + phone)).thenReturn(1L);
         when(valueOps.get("otp:" + phone)).thenReturn(null);
 
         assertThatThrownBy(() -> authService.verifyOtp(phone, "1234", User.Role.STUDENT))
