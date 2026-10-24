@@ -25,9 +25,17 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
                 .build();
     }
 
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String ip = request.getRemoteAddr();
+        String ip = resolveClientIp(request);
         Bucket bucket = buckets.computeIfAbsent(ip, k -> createNewBucket());
 
         if (bucket.tryConsume(1)) {

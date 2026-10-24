@@ -23,9 +23,8 @@ public class AuthController {
         String phone = request.get("phone");
         User.Role role = User.Role.valueOf(request.get("role").toUpperCase());
         String name = request.get("name");
-        
-        String otp = authService.requestOtp(phone, role, name);
-        return Map.of("message", "OTP sent", "devOtp", otp);
+        authService.requestOtp(phone, role, name);
+        return Map.of("message", "OTP sent");
     }
 
     @Operation(summary = "Verify OTP and get JWT token")

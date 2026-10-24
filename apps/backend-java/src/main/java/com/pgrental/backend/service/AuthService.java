@@ -7,8 +7,8 @@ import com.pgrental.backend.queue.OtpMessageProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -19,15 +19,12 @@ public class AuthService {
     private final OtpMessageProducer otpMessageProducer;
 
     private static final String OTP_PREFIX = "otp:";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public String requestOtp(String phone, User.Role role, String name) {
-        String otp = String.format("%04d", new Random().nextInt(10000));
+    public void requestOtp(String phone, User.Role role, String name) {
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         redisTemplate.opsForValue().set(OTP_PREFIX + phone, otp, Duration.ofMinutes(5));
-        
-        // Push to RabbitMQ for background delivery
         otpMessageProducer.sendOtpMessage(phone, otp);
-        
-        return otp;
     }
 
     public AuthResponse verifyOtp(String phone, String otp, User.Role role) {
@@ -45,7 +42,7 @@ public class AuthService {
                         .build()));
 
         String token = jwtUtils.generateToken(phone);
-        return new AuthResponse(user, new AuthTokens(token, "refresh-token-placeholder"));
+        return new AuthResponse(user, new AuthTokens(token, null));
     }
 
     public record AuthTokens(String accessToken, String refreshToken) {}
