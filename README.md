@@ -1,6 +1,6 @@
 # StayNear PG Rentals 🏠
 
-A premium, location-based PG discovery and booking SaaS platform designed for students and working professionals. This project features a high-performance Java Spring Boot architecture integrated with official Google Maps APIs and professional-grade infrastructure.
+A location-based PG discovery and booking platform for students and working professionals, built with Java Spring Boot and a React frontend.
 
 ## 🚀 Advanced Architecture
 
@@ -14,8 +14,8 @@ StayNear is built with a focus on scalability, security, and real-time geospatia
 *   **Database Migrations**: Versioned schema management using **Flyway**.
 *   **API Documentation**: Automated OpenAPI 3.0 specs via **Swagger UI** (`/swagger-ui.html`).
 *   **Security & Stability**:
-    *   **Rate Limiting**: IP-based throttling using Bucket4j.
-    *   **Stateless Auth**: JWT-based authentication with refresh tokens.
+    *   **Rate Limiting**: IP-based throttling using Bucket4j (instance-local; Redis-backed for multi-instance deployments).
+    *   **Stateless Auth**: JWT-based authentication.
 
 ### 🎨 Frontend (Next.js 15)
 *   **Google Maps Autocomplete**: Seamless address search and coordinate detection.
@@ -32,14 +32,11 @@ StayNear is built with a focus on scalability, security, and real-time geospatia
 | **Frontend** | Next.js 15, React, Tailwind CSS |
 | **Infrastructure** | Docker, Flyway, Swagger |
 
-## 📈 Scalability & Systems Design
+## 📈 Architecture Notes
 
-StayNear is designed with a **production-first** mindset:
-
-1.  **Horizontal Scaling**: The stateless Java backend can be scaled to N instances behind a Load Balancer (Nginx/AWS ELB).
-2.  **Geospatial Performance**: By using **PostGIS GIST indexes** instead of raw Haversine calculations, the system maintains O(log N) search performance even with millions of PGs.
-3.  **Distributed Caching**: Using Redis for OTPs and session data allows for seamless scaling without losing user state.
-4.  **Event-Driven Workers**: Heavy tasks (OTP, Image Processing, Analytics) are offloaded to **RabbitMQ workers**, preventing API latency.
+1.  **Geospatial Performance**: PostGIS GIST indexes on `GEOGRAPHY(Point,4326)` columns make nearby-PG queries fast at moderate scale; `ST_DWithin` short-circuits on the index.
+2.  **OTP Delivery**: Redis stores OTPs with 5-minute TTL; RabbitMQ delivers them asynchronously so the request returns immediately.
+3.  **Rate Limiting**: Bucket4j enforces 10 req/min per IP. The current ConcurrentHashMap store is instance-local; replace with the Redis-backed Bucket4j store before running multiple backend instances.
 
 ## 📍 Request Flow
 ```text

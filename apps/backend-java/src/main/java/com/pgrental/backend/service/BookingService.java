@@ -24,7 +24,7 @@ public class BookingService {
     @Transactional
     public Booking createBooking(User user, String pgId, RoomInventory.RoomType roomType) {
         Pg pg = pgRepository.findById(pgId).orElseThrow(() -> new RuntimeException("PG not found"));
-        RoomInventory inventory = roomInventoryRepository.findByPgIdAndType(pgId, roomType)
+        RoomInventory inventory = roomInventoryRepository.findByPgIdAndTypeForUpdate(pgId, roomType)
                 .orElseThrow(() -> new RuntimeException("Room type not available for this PG"));
 
         if (inventory.getOccupied() >= inventory.getTotal()) {
